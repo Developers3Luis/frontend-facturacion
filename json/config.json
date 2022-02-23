@@ -1,0 +1,5 @@
+{
+    "apiFactura":"http://172.16.102.27/api-factura/v1",
+    "#apiFactura":"http://172.16.102.47/service/rfv/api",
+    "apiAdempiere" : "http://172.16.100.40:4001"
+}

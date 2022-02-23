@@ -1,0 +1,74 @@
+@import url("https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+Antique&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kurenaido&display=swap');
+
+h1 {
+  color: black;
+  font-family: 'Zen Kurenaido', sans-serif;
+  font-size: 3.1em;
+}
+
+h4 {
+  color: black;
+  font-family: "Zen Kaku Gothic Antique", sans-serif;
+  font-size: 15px;
+}
+
+.card-center {
+  margin-top: 40px;
+}
+.carga{
+  font-family:"Zen Kaku Gothic Antique", sans-serif;
+
+  animation-name: parpadeo;
+  animation-duration: 1s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+
+  -webkit-animation-name:parpadeo;
+  -webkit-animation-duration: 1s;
+  -webkit-animation-timing-function: linear;
+  -webkit-animation-iteration-count: infinite;
+}
+@-moz-keyframes parpadeo{  
+  0% { opacity: 1.0; }
+  50% { opacity: 0.0; }
+  100% { opacity: 1.0; }
+}
+
+@-webkit-keyframes parpadeo {  
+  0% { opacity: 1.0; }
+  50% { opacity: 0.0; }
+   100% { opacity: 1.0; }
+}
+
+@keyframes parpadeo {  
+  0% { opacity: 1.0; }
+   50% { opacity: 0.0; }
+  100% { opacity: 1.0; }
+}
+/* svg {
+  fill: url(#MyGradient); 
+  
+  
+}​ */
+
+.svg{
+  min-width: 40% !important;
+  margin: 0 auto;
+  max-width: 300px !important;
+}
+
+.code input{
+  text-transform:uppercase;
+}
+
+
+  
+   
+
+
+/* .degradado{
+  background: linear-gradient(blue,red); 
+  -webkit-background-clip: text;
+  color: transparent;
+} */
