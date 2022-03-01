@@ -61,7 +61,7 @@
           <v-col md="7">
             <v-card width="100%" max-width="840px" style="margin:0 auto; " >
               <v-card-title  class="text-h5">¡Inicia tu Factura hoy!</v-card-title>
-              <v-card width="95%"  style="margin:0 auto; " elevation="5">
+              <v-card width="95%"  style="margin:0 auto; " elevation="5" v-if="paso1 == true">
                 <v-card-subtitle class="text-h6">
                   <span style="background: linear-gradient(purple,orange); -webkit-background-clip: text;color: transparent;">Paso 1:
                   </span> Ingresa los datos de tu ticket 
@@ -155,18 +155,18 @@
                     </v-alert>
                   </div>
                   <v-spacer></v-spacer>
-                  <v-btn  v-if="btnContinuar == true" @click="continuar = true" text dark color="orange">CONTINUAR</v-btn>
+                  <v-btn  v-if="btnContinuar == true" @click="continuar = true, paso1=false,paso2=true" text dark color="orange">CONTINUAR</v-btn>
                 </v-card-actions>
               </v-card>
               
-              <v-card class="mx-auto" width="95%" style="margin-top:5px;" elevation="5" :disabled="continuar==false">
+              <v-card class="mx-auto" width="95%" style="margin-top:5px;" v-if="paso2 == true" elevation="5" :disabled="continuar==false">
               <!-- <v-card class="mx-auto" width="95%" style="margin-top:5px;" elevation="5" > -->
                 <v-card-subtitle class="text-h6">
                   <span style="background: linear-gradient(purple,orange); -webkit-background-clip: text;color: transparent;">Paso 2:
                   </span> Ingresa tu RFC</v-card-subtitle>
                   <v-card-text>
                     <div class="container">
-                      <v-form ref="facturacion" @submit.prevent="comprobar = true, carga = true,mandarDatos()">
+                      <v-form ref="facturacion" @submit.prevent="paso1=false, paso2=false,paso3=true,comprobar = true, carga = true,mandarDatos()">
                         <v-container>
                           <v-row>
                             <v-col
@@ -175,7 +175,7 @@
                             >
                               <v-text-field
                                 :rules="[(v) => !!v || 'Inserte el RFC por favor']"
-                                :counter="13"
+                                
                                 label="RFC"
                                 required
                                 v-model="factura.rfc"
@@ -193,24 +193,13 @@
                               <v-icon v-if="success" style="margin-top:15px" color="#02F290">mdi-check-all</v-icon>
                               <v-icon style="margin-top:15px" color="error" v-if="error">mdi-close-thick</v-icon>
                             </v-col>
-                            <!-- <v-col cols="12" md="8" v-if="continuar==true">
-                              <v-text-field
-                              disabled
-                              v-model="factura.nombre"
-                              label="Nombre completo"
-                              required
-                              type="text"
-                              :rules="[(v) => !!v || 'Es requerdio',
-                                (v) => !v || /^[A-Za-z ÁÉÍÓÚáéíóú]{2,50}$/.test(v) || 'Solo letras por favor']"
-                              ></v-text-field>
-                            </v-col> -->
                           </v-row>
                         </v-container>
                         <v-card-actions>
                           <v-btn color="error" text v-if="actualizarRFC == true" @click="mandarDatosModalActualizar()">ACTUALIZAR RFC PARA FACTURAR</v-btn>
-                          <v-btn color="green" text v-if="registrarse == true" @click="modalRegistrar = true">Registrarse</v-btn>
+                          <v-btn color="success" text v-if="registrarse == true" @click="modalRegistrar = true, alert2=false,paso2=false">Registrarme</v-btn>
                           <v-spacer></v-spacer>
-                          <v-btn v-if="btnComprobarRFC == true" text color="orange" type="submit">Comprobar</v-btn>
+                          <v-btn v-if="btnComprobarRFC == true" text color="orange" type="submit">Continuar</v-btn>
                         </v-card-actions>
                       </v-form>
                     </div>
@@ -227,8 +216,8 @@
                       </v-card-title>
                       <v-divider color="yellow,"></v-divider>
                       <v-card-text>
-                          <v-form ref="Paso3" @submit.prevent="actualizarYgenerarFactura(registro)">
-                            <v-container>{{registro}}
+                          <v-form ref="registro" @submit.prevent="registrar(registro)">
+                            <v-container>
                               <v-row>
                                 <v-col
                                   cols="12"
@@ -266,8 +255,7 @@
                                   md="7"
                                   ><v-text-field
                                     class="code"
-                                    :rules="[(v) => !!v ||'Inserte el Nombre de Razón Social por favor',
-                                              (v) => !v || /^[A-Za-zÁÉÍÓÚáéíóú]+$/.test(v) || 'Solo letras por favor',]"
+                                    :rules="[(v) => !!v ||'Inserte el Nombre de Razón Social por favor']"
                                     label="Nombre de Razón Social"
                                     required
                                     v-model="registro.razonsocial"
@@ -280,8 +268,8 @@
                                   md="6"
                                 >
                                   <v-text-field
-                                    :rules="[(v) => !!v || 'Inserte el RFC por favor']"
-                                    :counter="10"
+                                    :rules="[(v) => !!v || 'Inserte el RFC por favor', (v) => !v || /^([A-ZÑ\x26]{3,4}([0-9]{2})(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1]))([A-Z\d]{3})?$/.test(v) ||'Ingrese una rfc valida']"
+                                    
                                     label="RFC"
                                     required
                                     v-model="registro.rfc"
@@ -292,8 +280,10 @@
                                 type="Number"
                                 label="Teléfono"
                                 v-model="registro.telefono"
-                                :rules="[(v)=> !!v || 'Teléfono es requerido']"
+                                :rules="[(v)=> !!v || 'Teléfono es requerido',
+                                          (v)=> !v || /^\d{10}$/.test(v) || 'Solo se admiten 10 números']"
                                 required
+                                :counter="10"
                                 ></v-text-field>
                                 </v-col>
                                 <v-col
@@ -361,6 +351,8 @@
                                       label="Colonia" item-text="asentamiento"
                                       item-value="asentamiento"
                                       no-data-text="No hay Colonias disponibles"
+                                      :rules="[(v) => !!v || 'Colonia es requerida']"
+                                      required
                                   ></v-select> 
                                 </v-col>
 
@@ -408,6 +400,7 @@
                                   label="Celular"
                                   v-model="registro.celular"
                                   :rules="[(v) => !!v || 'Se requiere el número de celular']"
+                                  :counter="10"
                                   ></v-text-field>
                                 </v-col>
                                 <v-col
@@ -487,7 +480,7 @@
                       </v-card-text>
                     </v-card>
                   </div>
-                  <div>
+                  <div v-if="paso3"> <!--  INICIA PASO 3 -->
                     <v-card class="mx-auto" width="95%" style="margin-top:5px;" elevation="5" :disabled="comprobar==false? actualizarDatoRFC==false:actualizarDatoRFC==true " >
                     <!-- <v-card class="mx-auto" width="95%" style="margin-top:5px;" elevation="5" > -->
                       <v-card-subtitle class="text-h6" v-if="actualizarDatoRFC==true">
@@ -500,24 +493,30 @@
                       </v-card-subtitle>
                       <v-card-text>
                         <div class="container">
-                          <v-form ref="actualizarRFC" @submit.prevent="generarFactura(factura2,fechaHoy)">
+                          <v-form ref="pasoGenerar" @submit.prevent="actualizarYgenerarFactura(factura2,fechaHoy)">
                             <v-container>
                               <v-row>
                                 <v-col
                                   cols="12"
                                   md="8"
                                 >
-                                  <v-text-field  name="postal" id="postal" @change="validarCp(factura2.postal)" @input="validarCp(factura2.postal)" onkeyup=""
+                                  <v-text-field v-if="checkboxActualizar== false" 
+                                    name="postal" v-model="factura2.postal" 
+                                    type="number" :counter="5" label="Código Postal" 
+                                    :disabled="checkboxActualizar== false"
+                                    required></v-text-field>
+                                  <v-text-field v-if="checkboxActualizar== true" name="postal" id="postal" @change="validarCp(factura2.postal)" @input="validarCp(factura2.postal)" onkeyup=""
+                                      :disabled="checkboxActualizar== false"
                                       v-model="factura2.postal" 
                                       onkeydown="javascript: return (event.keyCode == 69 ||event.keyCode == 109 
                                           ||event.keyCode == 107||event.keyCode == 190
                                           ||event.keyCode == 187||event.keyCode == 189 
                                           ||event.keyCode == 229||event.keyCode == 189 
                                           ) ? false : true"
-                                      style="width:400px"
+                                      style="width:400px;"
                                       :rules="[(v) => !!v || 'Inserte el Código Postal',
                                         (v) => (v && v.length <= 5 || 'Solo 5 números')]"
-                                      type="number" :counter="5" label="Código Postal">
+                                      type="number" :counter="5" label="Código Postal" required>
                                   </v-text-field>
                                 </v-col>
                                 <v-col
@@ -526,7 +525,7 @@
                                 >
                                   <v-text-field
                                     disabled
-                                    v-model="factura2.pais"
+                                    v-model="pais"
                                     type="text"
                                     label="País"
                                     required
@@ -557,7 +556,6 @@
                                   :disabled="checkboxActualizar== false"
                                   :rules="[(v) => !!v || 'Inserte el RFC por favor',
                                           (v) => !v || /^([A-ZÑ\x26]{3,4}([0-9]{2})(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1]))([A-Z\d]{3})?$/.test(v) || 'RFC invalido']"
-                                  :counter="13"
                                   v-model="factura2.rfc"
                                   label="RFC"
                                   required
@@ -569,7 +567,9 @@
                                 type="Number"
                                 label="Teléfono"
                                 v-model="factura2.telefono"
-                                :rules="[(v)=> !!v || 'Teléfono es requerido']"
+                                :rules="[(v)=> !!v || 'Teléfono es requerido',
+                                          (v)=> !v || /^\d{10}$/.test(v) || 'Solo se admiten 10 números']"
+                                :counter="10"
                                 required
                                 ></v-text-field>
                                 </v-col>
@@ -593,7 +593,7 @@
                                 :disabled="checkboxActualizar== false"
                                 label="Referencia"
                                 v-model="factura2.referencia"
-                                :rules="[(v) => !! v || 'Referencia es requerido']"
+                                
                                 @keyup="uppercase()"
                                 ></v-text-field>
                                 </v-col>
@@ -601,22 +601,24 @@
                                   cols="12"
                                   md="6"
                                 >
-                                <!-- <v-text-field
+                                <v-text-field
                                       :disabled="checkboxActualizar== false"
-                                      v-if="comprobar==true || actualizarDatoRFC==false || checkboxActualizar == true"
+                                      v-if="checkboxActualizar== false"
                                       v-model="factura2.asentamiento"
                                       label="Colonia" 
                                       required
                                       :rules="[(v) => !!v || 'Colonia es requerido']"
-                                  ></v-text-field>   -->
+                                  ></v-text-field>  
                                 <v-select
-                                  v-if="actualizarDatoRFC == true || checkboxActualizar== false || checkboxActualizar == true"
+                                  v-if="actualizarDatoRFC == true || checkboxActualizar == true"
                                   :disabled="checkboxActualizar== false"
                                       v-model="factura2.asentamiento" :items="asentamientos"
                                       label="Colonia" item-text="asentamiento"
                                       item-value="colonia"
                                       no-data-text="No hay Colonias disponibles"
-                                  ></v-select> 
+                                      required
+                                      :rules="[(v) => !!v || 'Colonia es requerida']"
+                                  ></v-select>
                                 </v-col>
 
                                 <v-col
@@ -638,7 +640,7 @@
                                   md="6"
                                 >
                                   <!-- <v-text-field
-                                    v-if="comprobar==true || actualizarDatoRFC==false && checkboxActualizar== true"
+                                    v-if=" checkboxActualizar== false"
                                     :disabled="checkboxActualizar== false"
                                     :rules="[(v) => !!v || 'Inserte el Estado por favor',
                                             (v) => !v || /^[A-Za-zÁÉÍÓÚáéíóú ]{1,30}$\s*/.test(v) || 'Solo letras por favor y sin espacio al final',]"
@@ -648,16 +650,17 @@
                                   ></v-text-field> -->
                                   <v-select
                                     :disabled="checkboxActualizar== false"
-                                    v-if="actualizarDatoRFC==true || checkboxActualizar== false || checkboxActualizar== true "
-                                    style="font-size:15px; color:red;"
+                                    v-if="actualizarDatoRFC==true  || checkboxActualizar== true || checkboxActualizar== false"
+                                    style="font-size:15px;"
                                     prepend-icon="mdi-sign-real-estate"
                                     label="Estado"
                                     color="blue"
-                                    :rules="[(v) => !!v || 'Estado es requerido']"
                                     v-model="factura2.estado"
                                     :items="estadosMX"
                                     item-text="estadonombre"
                                     item-value="idtabla"
+                                    :rules="[(v) => !! v || 'Estado es requerido']"
+                                    required
                                     :filter="customFilter"
                                   >
                                   <template slot="selection" slot-scope="data">
@@ -678,6 +681,7 @@
                                   label="Celular"
                                   v-model="factura2.celular"
                                   :rules="[(v) => !!v || 'Se requiere el número de celular']"
+                                  required
                                   ></v-text-field>
                                 </v-col>
                                 <v-col
@@ -686,6 +690,7 @@
                                 ><v-text-field
                                   :disabled="checkboxActualizar== false"
                                   v-model="factura2.correo"
+                                  
                                   label="Correo Electrónico"
                                   :rules="[(v) => !!v || 'Email es requerido',
                                            (v) => !v || /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || '¡Correo invañido!']"
@@ -697,7 +702,7 @@
                                 >
                                   <v-select
                                   :disabled="checkboxActualizar== false"
-                                  style="font-size:15px; color:red;"
+                                  style="font-size:15px;"
                                   prepend-icon="mdi-hail"
                                   label="Régimen Tributario"
                                   color="blue"
@@ -749,19 +754,11 @@
                                     item-value="idtabla"
                                     ></v-select>{{factura2.pago}}
                                   </v-col>
-                                  <!-- <v-col md="6">
-                                    <v-switch
-                                    v-if="actualizar!=false"
-                                    v-model="checkbox"
-                                    color="orange"
-                                    label="Eligir otra dirección"
-                                    @click="direccionesSociodeNegocio()"
-                                    ></v-switch>
-                                  </v-col> -->
                                   <v-col md="6">
                                     <v-switch
+                                     
                                       v-model="checkboxActualizar"
-                                      v-if="actualizar!=false"
+                                      
                                       color="orange"
                                       hide-details
                                       label="Modificar mis datos"
@@ -769,32 +766,10 @@
                                   </v-col>
                                   
                               </v-row>
-                              <!-- <v-divider color="(red,purple)"></v-divider>
-                              <div class="text-h6">ELIGE UNA FORMA DE PAGO</div>
-                              <v-row>
-                                <v-col>
-                                  <v-card class="container text-center" max-width="200">Transferencia electrónica
-                                    <v-img width="200" src="../../public/img/movil.png"></v-img>
-                                  </v-card>
-                                </v-col>
-                                <v-divider vertical></v-divider>
-                                <v-col>
-                                  <v-card class="container text-center"  max-width="200">Paypal
-                                    <v-img width="180" src="../../public/img/paypal.png"></v-img>
-                                  </v-card>
-                                </v-col>
-                                <v-divider vertical></v-divider>
-                                <v-col>
-                                  <v-card class="container text-center">Pago en efectivo
-                                    <v-img width="180" src="../../public/img/dinero.png"></v-img>
-                                  </v-card>
-                                </v-col>
-                              </v-row> -->
-
                             </v-container>
                             <v-card-actions>
                               <v-spacer></v-spacer>
-                              <v-btn text color="blue" v-if="checkboxActualizar==true" @click="actualizarYgenerarFactura(factura2),generarFactura(factura2,fechaHoy)"> ACTUALIZAR Y GENERAR FACTURA</v-btn>
+                              <v-btn text color="blue" v-if="checkboxActualizar==true" @click="actualizarYgenerarFactura(factura2,fechaHoy)"> ACTUALIZAR Y GENERAR FACTURA</v-btn>
                               <v-btn v-if="actualizarDatoRFC==true" text color="orange" type="submit">Actualizar</v-btn>
                               <v-btn v-if="comprobar==true || actualizarDatoRFC==false" :disabled="checkbox == true || checkboxActualizar == true" text color="orange" type="submit">Generar Factura</v-btn>
                             </v-card-actions>
@@ -803,119 +778,6 @@
                       </v-card-text>
                     </v-card>
                   </div>
-                  <!-- >>>>>>>>> Direcciones registradas -->
-                  <!-- <div>
-                    <v-card class="mx-auto" width="95%" style="margin-top:5px;" elevation="5" v-if="checkbox">
-                      <v-card-subtitle class="text-h6" style="background: linear-gradient(purple,orange); -webkit-background-clip: text; color:transparent;"> -->
-                        <!-- <span style="background: linear-gradient(purple,orange); -webkit-background-clip: text; color:transparent;">Paso 4: 
-                        </span>  -->
-                        <!-- &nbsp; Selecciona otra direccción 
-                      </v-card-subtitle>
-                      <div class="container">
-                        <div class="text-h5" justify="center" v-if=" userList ==0" dense outlined style="color:gray; text-align:center">
-                            No hay direcciones registradas
-                        </div> 
-                        <v-radio-group v-model="direccion"   v-if="userList !=0">
-                          <v-container >
-                            <v-row md="9"  class="justify-center" >
-                              
-                                <v-card v-for="userList in userList" :key="userList.c_location_id" 
-                                  width="40%"
-                                  ref="form"
-                                  elevation="8"
-                                  class="ma-5"
-                                  max-width="314"
-                                  max-height=""
-                                  height="">
-                                  <v-img
-                                    src="../../public/img/card.jpg"
-                                    height="35px"
-                                  ></v-img>
-                                  <v-radio  :value="userList.c_location_id"></v-radio>
-                                  <v-card-title style="align-text:center;">{{userList.locationname}}</v-card-title>
-                                  <v-card-text>
-                                    
-                                    <h2 class="font-weight-light mt-1">Pa&iacute;s</h2>
-                                    <h4 style="font-family:Lucida, sans-serif;">
-                                    {{ userList.countryname }}
-                                    </h4>
-                                    <v-divider
-                                      color="to left,cyan,red"
-                                      class="mt-1"
-                                    ></v-divider>
-                                    <h2 class="font-weight-light mt-1">Estado</h2>
-                                    <h4 style="font-family:Lucida, sans-serif;">
-                                      {{ userList.description }}
-                                    </h4>
-                                    <v-divider
-                                      color="to left,cyan,red"
-                                      class="mt-1"
-                                    ></v-divider>
-                                    <h2 class="font-weight-light mt-1">Ciudad</h2>
-                                    <h4 style="font-family:Lucida, sans-serif;">
-                                      {{ userList.city }}
-                                    </h4>
-                                    <v-divider
-                                      color="to left,cyan,red"
-                                      class="mt-1"
-                                    ></v-divider>
-                                    <h2 class="font-weight-light mt-1">Colonia</h2>
-                                    <h4 style="font-family:Lucida, sans-serif;">
-                                      {{ userList.address2 }}
-                                    </h4>
-                                    <v-divider
-                                      color="to left,cyan,red"
-                                      class="mt-1"
-                                    ></v-divider>
-                                    <h2 class="font-weight-light mt-1">Delegaci&oacute;n/Municipio</h2>
-                                    <h4 style="font-family:Lucida, sans-serif;">
-                                      {{ userList.address3 }}
-                                    </h4>
-                                    <v-divider
-                                      color="to left,cyan,red"
-                                      class="mt-1"
-                                    ></v-divider>
-                                    <h2 class="font-weight-light mt-1">Calle</h2>
-                                    <h4 style="font-family:Lucida, sans-serif;">
-                                      {{ userList.address1 }}
-                                    </h4>
-                                    <v-divider
-                                      color="to left,cyan,red"
-                                      class="mt-1"
-                                    ></v-divider>
-                                    <h2  class="font-weight-light mt-1">Tel&eacute;fono</h2>
-                                    <h4 style="font-family:Lucida, sans-serif;">
-                                      {{ userList.office_number }}
-                                    </h4>
-                                    <v-divider
-                                      color="to left,cyan,red"
-                                      class="mt-1"
-                                    ></v-divider>
-                                    
-                                    <h2 class="font-weight-light mt-1">C&oacute;digo Postal</h2>
-                                    <h4 style="font-family:Lucida, sans-serif;">
-                                      {{ userList.postal }}
-                                    </h4>
-                                    <v-divider
-                                      color="to left,cyan,red"
-                                      class="mt-1"
-                                    ></v-divider>
-                                  </v-card-text>
-                                </v-card>
-                            </v-row>
-                          </v-container>
-                          <br>
-                          <v-row justify="center" class="mx-auto">
-                            <v-btn justify="center"
-                              dark color="orange" text
-                              @click="seleccionarDireccion()">
-                              Elegir direcci&oacute;n
-                            </v-btn>
-                          </v-row> 
-                        </v-radio-group>
-                      </div>
-                    </v-card> -->
-                  <!-- </div> -->
                 </div>
               </template>
               <!-- >>>>>>>>> Case FINALIZA -->
@@ -925,7 +787,7 @@
         </v-row>
       </v-card>
       <div class="container">
-        <v-dialog v-model="carga" width="300" >
+        <v-dialog v-model="carga" width="300" persistent>
           <v-card class="svg">
             <div class="container" >
               <svg  width="93%" height="140px" viewBox="0 0 81 60" > 
@@ -973,6 +835,28 @@
             src="../../public/img/refividrio.png"
             ></v-img> -->
           </v-card-text>
+        </v-card>
+      </v-dialog>
+      <v-dialog  class="text-center centrar" v-model="facturaGenerada" width="500px" height="700px;" persistent>
+        <v-card class="centrar">
+          <v-card-title class="centrar" style="background: linear-gradient(purple,orange); -webkit-background-clip: text;color: transparent; margin:auto; ">¡ FACTURA GENERADA EXITOSAMENTE !</v-card-title>
+          <v-divider></v-divider>
+          <v-card-text style="color:black;font-size:16px;">
+            <div  class="container mx-auto">
+              <p>Fecha: <strong> {{datosFacturacion.date}} </strong> </p>
+              <p>
+                Este es el código de tu factura <strong> {{datosFacturacion.invoice}} </strong> 
+              </p>
+              <p>
+                Se envió  al correo <strong>  {{factura2.correo}} </strong>
+              </p> 
+            </div>
+          </v-card-text>
+          <v-divider></v-divider>  
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="error" @click="factura=false,recargar()"> cerrar </v-btn>
+          </v-card-actions>
         </v-card>
       </v-dialog>
     </v-container>
@@ -1037,7 +921,6 @@ export default {
       registrarse:false, //Muestra el boton de registrar
       modalRegistrar:false,
       registro:{
-        colonia:"",
         postal:"",
         estado:"",
         ciudad:"",
@@ -1045,6 +928,7 @@ export default {
         pais:"",
         asentamiento : "",
         cfdi:"",
+        referencia:"",
       },
       msgError:"", //mensaje
       msgError2:"", //mensaje
@@ -1069,10 +953,23 @@ export default {
       mayusculas:"",
       dia:new Date(),
       validarEntrega:[],
+      paso1:true,
+      paso2:false,
+      paso3:false,
+      pais:"México",
+      facturaGenerada:false,
+      datosFacturacion:{},
+      actualizacionArray:{},
     }
   },
+  computed: {
+    fechaConvertida () {
+      return this.formatDate(this.fechaHoy)
+    },
+  },
   async mounted () {
-    // console.log(this.fechaHoy);
+    
+    console.log(this.formatDate(this.fechaHoy));
     this.comprobanteFiscal();
     this.getEstado();
     this.getregimenTributario();
@@ -1128,6 +1025,12 @@ export default {
       this.btnComprobarRFC = true;
     },
     async validarRFC(rfc){
+      this.registrarse = false;
+      this.alert3= false;
+      this.alert2= false;
+      this.msgError='';
+      this.msgError2='';
+      this.msgError3='';
       console.log(rfc);
       const RFC = this.factura.rfc;
       var regExp = /^([A-ZÑ\x26]{3,4}([0-9]{2})(0[1-9]|1[0-2])(0[1-9]|1[0-9]|2[0-9]|3[0-1]))([A-Z\d]{3})?$/
@@ -1145,6 +1048,8 @@ export default {
         this.error = true;
         this.success = false;
         this.btnComprobarRFC = false;
+        this.alert2=true;
+        this.msgError3="RFC invalida"
       }
       // console.log(resultado);
     },
@@ -1179,7 +1084,7 @@ export default {
                 .then(res=>{
                     try {
                         this.alert2 = false;
-                        this.factura2.estado = res.data[0].response.estado;
+                        // this.factura2.estado = res.data[0].response.estado;
                         this.factura2.ciudad = res.data[0].response.ciudad;
                         this.factura2.delegacionMun = res.data[0].response.municipio;
                         this.factura2.pais = res.data[0].response.pais;
@@ -1195,6 +1100,8 @@ export default {
                     } catch (error) {
                         document.getElementById("postal").blur();
                         this.alert2=true;
+                        this.msgError2=""
+                        this.msgError3=""
                         this.msgError = "Existe un error con tu Código Postal.";
                         // this.error.cp = "Existe un error con este Código Postal.";
                         return false;
@@ -1203,6 +1110,8 @@ export default {
                     console.log(err);
                     document.getElementById("postal").blur(); 
                     this.alert2 = true;
+                    this.msgError2=""
+                    this.msgError3=""
                     this.msgError = "El Código Postal ingresado es Inválido.";
                     // this.error.cp = "El Código Postal ingresado es Inválido.";
                     window.scrollTo(0,0);
@@ -1283,104 +1192,41 @@ export default {
       }else if(this.validacionOrder.action == "nothing-update"){
         this.btnComprobarRFC = true;
         this.actualizarRFC = false;
-      
-        // if(this.validacionFolioventa.message[0].rfc =='XAXX010101000' && this.validacionFolioventa.message[0].razonsocial == 'CLIENTE MOSTRADOR' ){
-        //   console.log('CLIENTE MOSTRADOR');
-        //   this.btnComprobarRFC = false;
-        //   // this.error = tr  ue
-        //   this.alert2 = true
-        //   this.msgError="Tus datos no se encontraron en el "
-        //   this.msgError2="Portal de facturación"
-        //   this.msgError3="Debes registrarte."
-        //   this.registrarse = true;
-        //   window.scrollTo(0,0);
-        // }else{
-        //   this.actualizarRFC = true;
-        //   this.btnComprobarRFC = false;
-        // }
-              
-        
-        // let nombre = this. 
-        // for (let index = 0; index < this.validacionOrder.length; index++) {
-          // const element = this.validacionOrder.datos.rfc;
-          // const element2 = this.validacionOrder.datos.razonsocial;
-          // console.log(params);
-          //   if(rfc == element && this.factura.nombre == element2){
-          //     console.log('SOCIO ENCONTRADO');
-          //     if(rfc == 'XAXX010101000'){
-          //       if(rfc == 'XAXX010101000' && element2 == 'CLIENTE MOSTRADOR' ){
-          //         console.log('CLIENTE MOSTRADOR');
-          //         this.btnComprobarRFC = false;
-          //         // this.error = true
-          //         this.alert2 = true
-          //         // this.msgError="Tus datos no se encontraron en el "
-          //         // this.msgError2="Portal de facturación"
-          //         this.msgError3="Debes registrarte."
-          //         this.registrarse = true;
-          //         window.scrollTo(0,0);
-          //       }else{
-          //         this.actualizarRFC = true;
-          //         this.btnComprobarRFC = false;
-          //       }
-          //     }else{
-          //       this.btnComprobarRFC = true;
-          //       this.actualizarRFC = false;
-          //     }
-          //   }
-        // }
       }else if(this.validacionOrder.action == "update"){
             this.actualizarRFC = true;
             this.btnComprobarRFC = false;
+      }else if(this.validacionOrder.action == "check") {
+        this.alert2 = true
+        this.msgError2=this.validacionOrder.message;
+        this.msgError=""
+        this.msgError3=""
+        window.scrollTo(0,0);
       }else{
         this.btnComprobarRFC = true;
           this.actualizarRFC = false;
       }
       
     },
-    async actualizar(){
-      
-      let valid =this.$refs.actualizarRFC.validate();
-      if(valid){
-        this.carga = true;
-        await axios.put(config.apiFactura + '/')
-        .then(res=>{
-          return res.data;
-        }).catch(err=>{
-          return err
-        })
-        this.actualizarRFC = false
-        this.$refs.actualizarRFC.reset();
-        this.actualizarDatoRFC = false;
-        setTimeout(() => this.carga=false, 3000);
-        this.alert3= true;
-        this.msgError = "Tus datos fueron actualizados, en el paso 2: ¡Ingresa tu ";
-        this.msgError2 = "RFC Actualizada!";
-        window.scrollTo(0,0);
-      }
-    },
-    async registroOrden(){
-      await axios.post(config.apiFactura + '/crearSocioNegocio')
-      .then(res=>{
-        this.arrayRegistro = res.data;
-      }).catch(err=>{
-        console.log(err);
-        return false
-      })
-    },
-    mandarDatos(){ // es validacionFolioventa , para ejemplo es validacionOrder porque no manda los datos necesarios
+    mandarDatos(){ // manda los datos al paso 3
+      // this.paso1 = false;
+      // this.paso2 = false;
       this.factura2.rfc = this.validacionOrder.datos[0].rfc;
       this.factura2.calle = this.validacionOrder.datos[0].calle;
       this.factura2.razonsocial = this.validacionOrder.datos[0].razonsocial;
-      this.factura2.correo = this.validacionOrder.datos[0].correo;
+      this.factura2.correo = this.validacionOrder.datos[0].correoelectronico;
       this.factura2.postal = this.validacionOrder.datos[0].codigopostal;
       this.factura2.cfdi = this.validacionOrder.datos[0].usocfdi;
       this.factura2.delegacionMun = this.validacionOrder.datos[0].municipio;
       this.factura2.asentamiento = this.validacionOrder.datos[0].colonia;
       this.factura2.pais = this.validacionOrder.datos[0].pais;
-      this.factura2.estado = this.validacionOrder.datos[0].codigoestado;
+      this.factura2.estado = this.validacionOrder.datos[0].c_region_id;
       this.factura2.regimen = this.validacionOrder.datos[0].regimentriburario;
       this.factura2.pago = this.validacionOrder.datos[0].formapago;
       this.factura2.referencia = this.validacionOrder.datos[0].referencia;
+      this.factura2.telefono = this.validacionOrder.datos[0].telefono;
+      this.factura2.celular = this.validacionOrder.datos[0].celular;
+
+
       setTimeout(() => this.carga=false, 3000);
 
     },
@@ -1419,77 +1265,7 @@ export default {
         textTwo.indexOf(searchText) > -1
       )
     },
-    async direccionesSociodeNegocio(ad_user_id){
-      ad_user_id = 1011729
-      await axios.get(config.apiAdempiere + `/user/userAddress/portalFactura/${ad_user_id}`)
-      .then(res=>{
-        this.userList = res.data;
-        console.log(this.userList);
-      }).catch(err=>{
-        console.log(err);
-      })
-    },
-    seleccionarDireccion(){
-      if(this.direccion == 0){
-        this.alert2= true;
-        this.msgError2="Por favor selecciona una dirección";
-        window.scrollTo(0,0);
-      }else{
-        this.msgError="";
-        this.alert2= false;
-        this.mostrarDireccionseleccionada(this.direccion);
-
-      }
-    },
-    //>>>>>>>>> Manda los datos al paso 3 actualizando la dirección 
-    async mostrarDireccionseleccionada(direccion){
-      await axios.get(config.apiAdempiere + `/user/mDireccion/portalFactura/${direccion}`)
-      .then(res=>{
-        this.direccionSelect = res.data;
-        console.log(this.direccionSelect);
-      }).catch(err=>{
-        return err ,false
-      })
-      if(this.direccionSelect == false){
-        this.msgError="Error"
-      }else{
-        this.carga = true;
-        setTimeout(() => this.carga=false, 2000);
-        // this.direccionSelect
-        // this.factura2.rfc = this.validacionFolioventa[0].rfc;
-        this.factura2.calle = this.direccionSelect.calle;
-        this.factura2.nombreRS = this.direccionSelect.razonsocial;
-        this.factura2.correo = this.direccionSelect.correo;
-        this.factura2.postal = this.direccionSelect.postal;
-        this.factura2.cfdi = this.direccionSelect.nombreusocfdi;
-        this.factura2.delegacionMun = this.direccionSelect.municipio;
-        this.factura2.asentamiento = this.direccionSelect.colonia;
-        this.factura2.pais = this.direccionSelect.pais;
-        this.factura2.estado = this.direccionSelect.estado;
-        this.checkbox = false;
-      }
-    },
-    async actualizarCFDI(){
-      
-      this.array.id_socionegocio = this.validacionFolioventa[0].c_bpartner_id;
-      this.array2.cfdi = this.factura2.cfdi;
-      const params = JSON.stringify({
-              'id_socionegocio': '1013062',
-              'cfdi': 'G02'
-      });
-      // console.log(this.array);
-      // var array = JSON.stringify(this.validacionFolioventa[0].c_bpartner_id)
-      // var array2 = JSON.stringify(this.factura2.cfdi)
-      await axios.put(config.apiFactura + `/actualizaCFDISocioNegocio`, params, {
-      headers: {
-          'content-type': 'application/json',
-      },})
-      .then(res=>{
-        console.log(res);
-      }).catch(err=>{
-        console.log(err);
-      })
-    },
+    
     async getregimenTributario(){
       await axios.get(config.apiFactura + '/regimenTriburario',
       {headers:{'Api-Key': '[SVR_@3d524a53c110e4c22463b10ed32cef9d]'}})
@@ -1509,45 +1285,203 @@ export default {
         // console.log(this.formasPago,'PAGO');
       }).catch(err=>{return err})
     },
-    async actualizarYgenerarFactura(factura2){
-   
-      const params = JSON.stringify({
-        "razonsocial" : `${factura2.razonsocial.toUpperCase()}`
-        ,"rfc" : `${factura2.rfc}`
-        ,"cfdi" : `${factura2.cfdi}`
-        ,"calle": `${factura2.calle.toUpperCase()}`
-        ,"colonia": `${factura2.asentamiento}` 
-        ,"municipio" : `${factura2.delegacionMun}`
-        ,"referencia" : `${factura2.referencia.toUpperCase()}`
-        ,"codigopostal": `${factura2.postal}`
-        ,"telefono" : `${factura2.telefono}`
-        ,"celular" : `${factura2.celular}`
-        ,"correo" : `${factura2.correo}`
-        ,"estado": `${factura2.estado}`
-        ,"regimentributario" : `${factura2.regimen}`
-        ,"formapago": `${factura2.pago}`
-      });
-      console.log(params);
+    async registrar(factura2){
+      console.log(factura2);
+      let valid = this.$refs.registro.validate();
+      if(valid){
+        this.carga = true;
+        if(factura2.referencia=="" || factura2.referencia==null){
+            const params = JSON.stringify({
+            "razonsocial" : `${factura2.razonsocial.toUpperCase()}`
+            ,"rfc" : `${factura2.rfc}`
+            ,"cfdi" : `${factura2.cfdi}`
+            ,"calle": `${factura2.calle.toUpperCase()}`
+            ,"colonia": `${factura2.asentamiento}` 
+            ,"municipio" : `${factura2.delegacionMun}`
+            ,"referencia" : `${factura2.referencia}`
+            ,"codigopostal": `${factura2.postal}`
+            ,"telefono" : `${factura2.telefono}`
+            ,"celular" : `${factura2.celular}`
+            ,"correo" : `${factura2.correo}`
+            ,"estado": `${factura2.estado}`
+            ,"regimentributario" : `${factura2.regimen}`
+            ,"formapago": `${factura2.pago}`
+          });
+
+            await axios.post(config.apiFactura + '/SocioNegocio',params,
+            {headers:{'Api-Key': '[SVR_@3d524a53c110e4c22463b10ed32cef9d]'}})
+            .then(res=>{console.log(res.data); })
+            .catch(err=>{return err})
+            this.msgError3='';
+            this.modalRegistrar = false;
+            this.btnComprobarRFC = false;
+            this.actualizarRFC = false
+            // this.$refs.registro.reset();
+            this.actualizarDatoRFC = false;
+            // setTimeout(() => this.carga=false, 3000);
+            this.alert3= true;
+            this.msgError = "Tus datos fueron registrados correctamente ";
+            this.msgError2 = "";
+            this.registrarse = false;
+            window.scrollTo(0,0);
+            await this.validarFolioOrder(factura2.rfc);
+            this.mandarDatos();
+            this.paso3=true;
+            this.comprobar = true
+        }else{
+          const params = JSON.stringify({
+            "razonsocial" : `${factura2.razonsocial.toUpperCase()}`
+            ,"rfc" : `${factura2.rfc}`
+            ,"cfdi" : `${factura2.cfdi}`
+            ,"calle": `${factura2.calle.toUpperCase()}`
+            ,"colonia": `${factura2.asentamiento}` 
+            ,"municipio" : `${factura2.delegacionMun}`
+            ,"referencia" : `${factura2.referencia.toUpperCase()}`
+            ,"codigopostal": `${factura2.postal}`
+            ,"telefono" : `${factura2.telefono}`
+            ,"celular" : `${factura2.celular}`
+            ,"correo" : `${factura2.correo}`
+            ,"estado": `${factura2.estado}`
+            ,"regimentributario" : `${factura2.regimen}`
+            ,"formapago": `${factura2.pago}`
+            });
+            await axios.post(config.apiFactura + '/SocioNegocio',params,
+            {headers:{'Api-Key': '[SVR_@3d524a53c110e4c22463b10ed32cef9d]'}})
+            .then(res=>{console.log(res.data); })
+            .catch(err=>{return err})
+            this.msgError3='';
+            this.modalRegistrar = false;
+            this.btnComprobarRFC = false;
+            this.actualizarRFC = false;
+            this.actualizarDatoRFC = false;
+            // setTimeout(() => this.carga=false, 3000);
+            this.alert3= true;
+            this.msgError = "Tus datos fueron registrados correctamente ";
+            this.msgError2 = "";
+            this.registrarse = false;
+            window.scrollTo(0,0);
+            await this.validarFolioOrder(factura2.rfc);
+            this.mandarDatos();
+            this.comprobar = true
+
+
+        }  
+      }
+    },
+
+    async actualizarYgenerarFactura(factura2,fechaHoy){
+      this.alert3= false;
+      console.log(factura2);
+      let valid = this.$refs.pasoGenerar.validate();
+      if(valid){
+        this.carga = true;
+        if(factura2.referencia=="" || factura2.referencia==null){
+            const params = JSON.stringify({
+            "razonsocial" : `${factura2.razonsocial.toUpperCase()}`
+            ,"rfc" : `${factura2.rfc}`
+            ,"cfdi" : `${factura2.cfdi}`
+            ,"calle": `${factura2.calle.toUpperCase()}`
+            ,"colonia": `${factura2.asentamiento}` 
+            ,"municipio" : `${factura2.delegacionMun}`
+            ,"referencia" : ``
+            ,"codigopostal": `${factura2.postal}`
+            ,"telefono" : `${factura2.telefono}`
+            ,"celular" : `${factura2.celular}`
+            ,"correo" : `${factura2.correo}`
+            ,"estado": `${factura2.estado}`
+            ,"regimentributario" : `${factura2.regimen}`
+            ,"formapago": `${factura2.pago}`
+          });
+
+            await axios.post(config.apiFactura + '/SocioNegocio',params,
+            {headers:{'Api-Key': '[SVR_@3d524a53c110e4c22463b10ed32cef9d]'}})
+            .then(res=>{
+              this.actualizacionArray = res.data;
+              console.log(this.actualizacionArray,'actualizar'); 
+            })
+            .catch(err=>{return err})
+            this.msgError3='';
+            this.modalRegistrar = false;
+            this.btnComprobarRFC = false;
+            this.actualizarRFC = false;
+            this.actualizarDatoRFC = false;
+            this.msgError2 = "";
+            this.msgError3 = "";
+            this.registrarse = false;
+            window.scrollTo(0,0);
+            
+            // setTimeout(() => location.reload(), 2000);
+            await this.generarFactura(factura2,fechaHoy);
+        }else{
+          const params = JSON.stringify({
+            "razonsocial" : `${factura2.razonsocial.toUpperCase()}`
+            ,"rfc" : `${factura2.rfc}`
+            ,"cfdi" : `${factura2.cfdi}`
+            ,"calle": `${factura2.calle.toUpperCase()}`
+            ,"colonia": `${factura2.asentamiento}` 
+            ,"municipio" : `${factura2.delegacionMun}`
+            ,"referencia" : `${factura2.referencia.toUpperCase()}`
+            ,"codigopostal": `${factura2.postal}`
+            ,"telefono" : `${factura2.telefono}`
+            ,"celular" : `${factura2.celular}`
+            ,"correo" : `${factura2.correo}`
+            ,"estado": `${factura2.estado}`
+            ,"regimentributario" : `${factura2.regimen}`
+            ,"formapago": `${factura2.pago}`
+          });
+            await axios.post(config.apiFactura + '/SocioNegocio',params,
+            {headers:{'Api-Key': '[SVR_@3d524a53c110e4c22463b10ed32cef9d]'}})
+            .then(res=>{
+              this.actualizacionArray = res.data;
+              console.log(this.actualizacionArray,'actualizar'); 
+            })
+            .catch(err=>{return err})
+            this.msgError3='';
+            this.modalRegistrar = false;
+            this.btnComprobarRFC = false;
+            this.actualizarRFC = false;
+            this.actualizarDatoRFC = false;
+            
+            this.msgError2 = "";
+            this.msgError3 = "";
+            // this.msgError = "¡ Factura generada exitosamente !";
+            this.registrarse = false;
+            window.scrollTo(0,0);
+            // this.alert3= true;
+            // setTimeout(() => location.reload(), 2000);
+            await this.generarFactura(factura2,fechaHoy);
+        }  
+      }else{
+        this.alert2 = true;
+        this.msgError2='Por favor llena todos los campos'
+        window.scrollTo(0,0);
+      }
     
-      await axios.post(config.apiFactura + '/SocioNegocio',params,
-      {headers:{'Api-Key': '[SVR_@3d524a53c110e4c22463b10ed32cef9d]'}})
-      .then(res=>{console.log(res.data); })
-      .catch(err=>{return err})
+      // await axios.post(config.apiFactura + '/SocioNegocio',params,
+      // {headers:{'Api-Key': '[SVR_@3d524a53c110e4c22463b10ed32cef9d]'}})
+      // .then(res=>{console.log(res.data); })
+      // .catch(err=>{return err})
+
+      
     },
 
     async generarFactura(factura2,fechaHoy){
-      let valid = this.$refs.Paso3.validate()
+      let valid = this.$refs.pasoGenerar.validate();
       if (valid) {
+        this.carga = true;
         await this.buscarEntrega();
-        if(this.validarEntrega == ''){
-
-        } else if(this.validarEntrega == 'success'){
+        if(this.validarEntrega.status == 'error'){
+          this.alert2 = true;
+          this.msgError2='Por favor Actualice sus datos'
+          window.scrollTo(0,0);
+          
+        } else if(this.validarEntrega.status == 'success'){
           let vOrden_ID = this.validacionFolioventa.message[0].c_order_id;
-          let vSocio_ID = this.validacionFolioventa.message[0].c_bpartner_id;
-          let vDireccion_ID = this.validacionOrder.datos[0].c_location_id;
+          let vSocio_ID = this.actualizacionArray.vIdSocioNegocio;
+          let vDireccion_ID = this.actualizacionArray.vIdDireccionCorta;
           let vOrganizacion_ID = this.validacionFolioventa.message[0].ad_org_id;
           const vCFDI = factura2.cfdi;
-          const vFechaFactura = fechaHoy;
+          const vFechaFactura = this.formatDate(fechaHoy);
           const vFormaPago = factura2.pago;
     
           const params2 = JSON.stringify({
@@ -1563,15 +1497,31 @@ export default {
           console.log(params2);
           await axios.post(config.apiFactura + '/factura',params2,
           {headers:{'Api-Key': '[SVR_@3d524a53c110e4c22463b10ed32cef9d]'}})
-          .then(res=>{console.log(res.data);})
+          .then(res=>{
+            this.datosFacturacion= res.data
+            console.log(this.datosFacturacion);
+            })
           .catch(err=>{console.log(err);})
+          if(this.datosFacturacion.status =='error'){
+            this.alert2 = true;
+            this.msgError2=this.datosFacturacion.message;
+            this.msgError3="";
+            this.msgError="";
+            this.carga = false;
+          }else if(this.datosFacturacion.status =='success'){
+            setTimeout(() => this.carga=false, 1000);
+            this.facturaGenerada = true;
+          }
+          
+          // this.carga = false;
+          
+          // setTimeout(() => this.alert2=true , 5000);
         }
-  
-        
-        
+      }else{
+        this.alert2 = true;
+        this.msgError2='Por favor llena todos los campos'
+        window.scrollTo(0,0);
       }
-      
-      
     },
     async buscarEntrega(){
       const vorden_id = this.validacionFolioventa.message[0].c_order_id;
@@ -1587,7 +1537,16 @@ export default {
     },
     uppercase(){
       this.mayusculas = this.mayusculas.toLowerCase();
-    }
+    },
+    recargar(){
+       setTimeout(() => location.reload(), 100);
+    },
+    formatDate (date) {
+        if (!date) return null
+
+        const [year, month, day] = date.split('-')
+        return `${day}/${month}/${year}`
+      },
   },
 };
 </script>

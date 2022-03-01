@@ -6,6 +6,10 @@
 // }
 const webpack = require('webpack');
 module.exports = {
+  // devServer: {
+  //    https: true,
+  //    public : 'refividrio.com.mx'
+  //   },
     configureWebpack: {
       plugins: [
         new webpack.DefinePlugin({
